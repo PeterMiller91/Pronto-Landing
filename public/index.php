@@ -22,6 +22,9 @@ $routeUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . $mapsQuery;
 $mapsSearchUrl = 'https://www.google.com/maps/search/?api=1&query=' . $mapsQuery;
 $mapsEmbedUrl = 'https://www.google.com/maps?q=' . $mapsQuery . '&output=embed&hl=de';
 $topReview = $reviews[0] ?? null;
+$special = weekly_special();
+$specialId = $special ? (int) $special['dish']['id'] : 0;
+$cents = fn ($v) => $v === null ? '' : (string) (int) $v;
 
 $pageTitle = 'Pizzeria Pronto Pronto Vohenstrauß – italienische Pizza am Marktplatz, Lieferservice';
 $pageDescription = 'Pronto Pronto: italienische Pizza, Pasta und Dolci vom Marktplatz Vohenstrauß. Anrufen, bestellen, genießen – Lieferservice oder Abholung, täglich ab 17 Uhr außer dienstags.';
@@ -109,6 +112,50 @@ require APP_DIR . '/views/site_header.php';
   </div>
 </div>
 
+<?php if ($special):
+    $sd = $special['dish'];
+    $sPhoto = $special['photo'] ? photo_url($special['photo']) : $heroUrl;
+    $sNormal = $sd['price_cents'] !== null ? (int) $sd['price_cents'] : ($sd['price_large_cents'] !== null ? (int) $sd['price_large_cents'] : null);
+    $sPrice = $special['price_cents'] ?? $sNormal;
+    $sText = $special['text'] !== '' ? $special['text'] : (string) $sd['description'];
+    $sAvailable = (int) $sd['is_available'] === 1; ?>
+<!-- ===== Pizza der Woche ===== -->
+<section class="special" id="pizza-der-woche" aria-labelledby="special-title">
+  <div class="wrap">
+    <article class="special__card">
+      <div class="special__media">
+        <img src="<?= e($sPhoto) ?>" alt="<?= e($sd['name']) ?> – Pizza der Woche bei Pronto Pronto" loading="lazy" width="800" height="800">
+        <span class="special__stamp" aria-hidden="true">Solo questa settimana!</span>
+      </div>
+      <div class="special__body">
+        <span class="kicker kicker--gold">Pizza della settimana</span>
+        <h2 id="special-title"><span class="special__label">Pizza der Woche:</span> <?= e($sd['name']) ?></h2>
+        <?php if ($sText !== ''): ?><p><?= e($sText) ?></p><?php endif; ?>
+        <?php if ($sPrice !== null): ?>
+        <p class="special__price">
+          <strong><?= e(format_price($sPrice)) ?></strong>
+          <?php if ($special['price_cents'] !== null && $sNormal !== null && $sNormal > $special['price_cents']): ?><s aria-label="statt <?= e(format_price($sNormal)) ?>"><?= e(format_price($sNormal)) ?></s><span class="special__save">Du sparst <?= e(format_price($sNormal - (int) $special['price_cents'])) ?></span><?php endif; ?>
+        </p>
+        <?php endif; ?>
+        <?php if ($special['until'] !== ''): ?>
+        <small class="special__until"><?= icon('clock') ?>Nur bis <?= e(WEEKDAYS[(int) (new DateTimeImmutable($special['until']))->format('w')]) ?>, <?= e(german_date($special['until'])) ?></small>
+        <?php endif; ?>
+        <div class="special__actions">
+          <?php if ($sAvailable): ?>
+          <button class="btn btn--gold" type="button" data-add data-nr="<?= e($sd['nr']) ?>" data-name="<?= e($sd['name']) ?>" data-variant="w" data-label="Pizza der Woche" data-price="<?= e($cents($sPrice)) ?>">
+            <?= icon('plus') ?><span data-add-text>Auf den Bestellzettel</span>
+          </button>
+          <?php else: ?>
+          <span class="dish__soldout" style="color:#F3B4AE">Heute leider schon ausverkauft</span>
+          <?php endif; ?>
+          <a class="btn btn--ghost" href="tel:<?= e($site['phone_e164']) ?>"><?= icon('phone') ?>Jetzt bestellen</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+<?php endif; ?>
+
 <div class="marquee" aria-hidden="true">
   <div class="marquee__track">
     <?php for ($i = 0; $i < 2; $i++): ?>
@@ -151,19 +198,33 @@ require APP_DIR . '/views/site_header.php';
             </div>
             <?php if ($twoPrices): ?><span class="dish__prices"><?= e($price) ?></span><?php endif; ?>
             <?php if ($d['description'] !== ''): ?><span class="dish__desc"><?= e($d['description']) ?></span><?php endif; ?>
-            <?php if (!$available || $d['is_vegetarian'] || $d['is_spicy'] || $d['is_new'] || $d['is_recommended']): ?>
+            <?php $isSpecial = (int) $d['id'] === $specialId; ?>
+            <?php if (!$available || $isSpecial || $d['is_vegetarian'] || $d['is_spicy'] || $d['is_new'] || $d['is_recommended']): ?>
             <span class="dish__tags">
               <?php if (!$available): ?><span class="dish__soldout">Heute leider aus</span><?php endif; ?>
+              <?php if ($isSpecial): ?><a class="tag tag--week" href="#pizza-der-woche">Pizza der Woche</a><?php endif; ?>
               <?php if ($d['is_recommended']): ?><span class="tag tag--rec">Consiglio della casa</span><?php endif; ?>
               <?php if ($d['is_new']): ?><span class="tag tag--new">Neu</span><?php endif; ?>
               <?php if ($d['is_vegetarian']): ?><span class="tag">Vegetarisch</span><?php endif; ?>
               <?php if ($d['is_spicy']): ?><span class="tag tag--hot">Scharf</span><?php endif; ?>
             </span>
             <?php endif; ?>
+            <?php if ($twoPrices && $available): ?>
+            <div class="size-pick" id="size-<?= (int) $d['id'] ?>" role="group" aria-label="Größe für <?= e($d['name']) ?> wählen" hidden>
+              <button type="button" class="size-pick__btn" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="k" data-label="klein" data-price="<?= e($cents($d['price_cents'])) ?>">klein <b><?= e(format_price((int) $d['price_cents'])) ?></b> <?= icon('plus') ?></button>
+              <button type="button" class="size-pick__btn" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="g" data-label="groß" data-price="<?= e($cents($d['price_large_cents'])) ?>">groß <b><?= e(format_price((int) $d['price_large_cents'])) ?></b> <?= icon('plus') ?></button>
+            </div>
+            <?php endif; ?>
           </div>
-          <button class="add-btn" type="button" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-count="0" aria-label="<?= e($d['name']) ?> auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
+          <?php if ($twoPrices): ?>
+          <button class="add-btn" type="button" data-pick="size-<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-count="0" aria-expanded="false" aria-controls="size-<?= (int) $d['id'] ?>" aria-label="<?= e($d['name']) ?>: Größe wählen und auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
             <?= icon('plus') ?><span class="add-btn__count" aria-hidden="true"></span>
           </button>
+          <?php else: ?>
+          <button class="add-btn" type="button" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="" data-label="" data-price="<?= e($cents($d['price_cents'] ?? $d['price_large_cents'])) ?>" data-count="0" aria-label="<?= e($d['name']) ?> auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
+            <?= icon('plus') ?><span class="add-btn__count" aria-hidden="true"></span>
+          </button>
+          <?php endif; ?>
         </li>
         <?php endforeach; ?>
       </ul>
@@ -277,6 +338,24 @@ require APP_DIR . '/views/site_header.php';
       </div>
       <div class="map__actions">
         <a class="btn btn--outline" href="<?= e($routeUrl) ?>" target="_blank" rel="noopener"><?= icon('route') ?>Andiamo – Route planen</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Als App speichern ===== -->
+<section class="app-promo" data-app-promo hidden aria-labelledby="app-title">
+  <div class="wrap">
+    <div class="app-promo__card">
+      <img src="<?= e(url('assets/img/icon-192.png')) ?>" alt="" width="64" height="64" class="app-promo__icon">
+      <div class="app-promo__body">
+        <h2 id="app-title">Pronto Pronto aufs Handy holen</h2>
+        <p>Ein Tipp auf das Pizza-Symbol – und du bist bei Speisekarte, Pizza der Woche und Telefon. Ohne App-Store, ohne Anmeldung.</p>
+        <p class="app-promo__ios" data-ios-hint hidden>Tippe unten auf <strong>Teilen</strong> <span aria-hidden="true">⬆︎</span> und dann auf <strong>„Zum Home-Bildschirm“</strong>.</p>
+        <div class="app-promo__actions">
+          <button class="btn btn--red" type="button" data-install><?= icon('plus') ?>Zum Startbildschirm</button>
+          <button class="btn-link" type="button" data-install-dismiss>Nicht jetzt</button>
+        </div>
       </div>
     </div>
   </div>

@@ -15,6 +15,12 @@ $home = $isHome ? '' : url('/');
 <meta name="description" content="<?= e($pageDescription) ?>">
 <meta name="theme-color" content="#A8201A">
 <link rel="icon" href="<?= e(url('assets/img/favicon.svg')) ?>" type="image/svg+xml">
+<link rel="manifest" href="<?= e(url('manifest.webmanifest')) ?>">
+<link rel="apple-touch-icon" href="<?= e(url('assets/img/apple-touch-icon.png')) ?>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pronto Pronto">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preload" href="<?= e(url('assets/fonts/playfair-display-latin-800-normal.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(asset('assets/css/site.css')) ?>">
 <meta property="og:title" content="<?= e($pageTitle) ?>">

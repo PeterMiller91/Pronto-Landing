@@ -1,0 +1,23 @@
+{
+  "name": "Pizzeria Pronto Pronto Vohenstrauß",
+  "short_name": "Pronto Pronto",
+  "description": "Italienische Pizza vom Marktplatz Vohenstrauß – Speisekarte, Pizza der Woche und direkt anrufen.",
+  "lang": "de",
+  "id": "./",
+  "start_url": "./?quelle=app",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6EFE2",
+  "theme_color": "#A8201A",
+  "categories": ["food", "lifestyle"],
+  "icons": [
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Speisekarte", "short_name": "Il menù", "url": "./?quelle=app#karte", "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Pizza der Woche", "short_name": "Pizza der Woche", "url": "./?quelle=app#pizza-der-woche", "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

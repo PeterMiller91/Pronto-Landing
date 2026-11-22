@@ -42,63 +42,128 @@
     });
   });
 
-  /* ---------- Bestellzettel ---------- */
+  /* ---------- Bestellzettel mit Preisen ---------- */
   var bar = document.querySelector('[data-order-bar]');
   if (bar) {
-    var order = store.get('pp_order', {}) || {};
-    var names = {};
-    var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-add]'));
-    buttons.forEach(function (b) { names[b.dataset.nr] = b.dataset.name; });
-    Object.keys(order).forEach(function (nr) { if (!names[nr]) delete order[nr]; });
+    var euro = function (c) { return (c / 100).toFixed(2).replace('.', ',') + ' €'; };
+    var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+
+    // Katalog aus der Seite: jede Bestell-Variante (Gericht + Größe) hat einen Schlüssel
+    var sources = Array.prototype.slice.call(document.querySelectorAll('[data-add]'));
+    var catalog = {};
+    var keyOf = function (el) { return el.dataset.nr + '|' + (el.dataset.variant || ''); };
+    sources.forEach(function (el) {
+      var p = el.dataset.price;
+      catalog[keyOf(el)] = { nr: el.dataset.nr, name: el.dataset.name, label: el.dataset.label || '', price: p === '' || p === undefined ? null : parseInt(p, 10) };
+    });
+
+    // Gespeicherten Zettel laden, nur noch gültige Gerichte behalten (Preise immer aktuell aus der Seite)
+    var saved = store.get('pp_order2', {}) || {};
+    var order = {};
+    Object.keys(saved).forEach(function (k) { if (catalog[k] && saved[k] > 0) order[k] = Math.min(99, saved[k] | 0); });
 
     var toggle = bar.querySelector('[data-order-toggle]');
     var sheet = bar.querySelector('#order-sheet');
     var lines = bar.querySelector('[data-order-lines]');
     var countEl = bar.querySelector('[data-order-count]');
+    var sumEl = bar.querySelector('[data-order-sum]');
+    var totalEl = bar.querySelector('[data-order-total]');
+    var totalLabel = bar.querySelector('[data-order-total-label]');
+    var noteEl = bar.querySelector('[data-order-note]');
     var hint = bar.querySelector('[data-order-hint]');
+    var mainBtns = Array.prototype.slice.call(document.querySelectorAll('.add-btn'));
 
-    var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
-    var total = function () { return Object.keys(order).reduce(function (a, k) { return a + order[k]; }, 0); };
-
-    var render = function () {
-      buttons.forEach(function (b) {
-        var n = order[b.dataset.nr] || 0;
-        b.dataset.count = String(n);
-        b.querySelector('.add-btn__count').textContent = n ? String(n) : '';
-        b.setAttribute('aria-label', b.dataset.name + ' auf den Bestellzettel' + (n ? ' (' + n + ' notiert)' : ''));
-      });
-      var t = total();
-      toggle.hidden = t === 0;
-      countEl.textContent = t === 1 ? '1 Gericht' : t + ' Gerichte';
-      if (t === 0) setSheet(false);
-      lines.innerHTML = Object.keys(order).sort(function (a, b) { return a - b; }).map(function (nr) {
-        return '<li class="order-line"><span class="dish__nr">' + esc(nr) + '</span><span>' + order[nr] + '× ' + esc(names[nr]) +
-          '</span><button class="icon-btn" type="button" data-remove="' + esc(nr) + '" aria-label="Eine ' + esc(names[nr]) + ' entfernen">' +
-          '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></li>';
-      }).join('');
-      store.set('pp_order', order);
-    };
     var setSheet = function (open) {
       sheet.hidden = !open;
       toggle.setAttribute('aria-expanded', String(open));
       hint.textContent = open ? 'schließen' : 'ansehen ↑';
     };
 
-    buttons.forEach(function (b) {
-      b.addEventListener('click', function () {
-        order[b.dataset.nr] = (order[b.dataset.nr] || 0) + 1;
+    var render = function () {
+      var keys = Object.keys(order).sort(function (a, b) {
+        var na = parseInt(a, 10), nb = parseInt(b, 10), rank = { '': 0, k: 1, g: 2, w: 3 };
+        return na !== nb ? na - nb : rank[a.split('|')[1]] - rank[b.split('|')[1]];
+      });
+      var count = 0, sum = 0, unknown = 0;
+      keys.forEach(function (k) {
+        var q = order[k], c = catalog[k];
+        count += q;
+        if (c.price === null) unknown += q; else sum += c.price * q;
+      });
+
+      // Zähler an den Plus-Knöpfen (alle Größen zusammen, ohne Aktions-Variante)
+      mainBtns.forEach(function (b) {
+        var n = 0;
+        keys.forEach(function (k) { if (catalog[k].nr === b.dataset.nr && k.slice(-2) !== '|w') n += order[k]; });
+        b.dataset.count = String(n);
+        b.querySelector('.add-btn__count').textContent = n ? String(n) : '';
+      });
+      // Knopf "Pizza der Woche"
+      document.querySelectorAll('[data-add][data-variant="w"]').forEach(function (b) {
+        var n = order[keyOf(b)] || 0;
+        var t = b.querySelector('[data-add-text]');
+        if (t) t.textContent = n ? 'Auf dem Zettel (' + n + ') – noch eine?' : 'Auf den Bestellzettel';
+        b.classList.toggle('is-added', n > 0);
+      });
+
+      toggle.hidden = count === 0;
+      countEl.textContent = count === 1 ? '1 Gericht' : count + ' Gerichte';
+      sumEl.textContent = sum > 0 ? ' · ' + euro(sum) + (unknown ? '*' : '') : '';
+      totalEl.textContent = euro(sum);
+      totalLabel.textContent = unknown ? 'Summe bisher*' : 'Summe';
+      noteEl.textContent = (unknown ? '* Ohne ' + (unknown === 1 ? '1 Gericht' : unknown + ' Gerichte') + ' ohne Preis – den sagen wir dir am Telefon. ' : '') + 'Zzgl. eventueller Lieferkosten, Extras berechnen wir am Telefon.';
+      if (count === 0) setSheet(false);
+
+      lines.innerHTML = keys.map(function (k) {
+        var c = catalog[k], q = order[k];
+        var label = c.label ? ' <small>' + esc(c.label) + (c.price !== null ? ' · je ' + euro(c.price) : '') + '</small>' : (c.price !== null && q > 1 ? ' <small>je ' + euro(c.price) + '</small>' : '');
+        var price = c.price === null ? 'Preis am Telefon' : euro(c.price * q);
+        return '<li class="order-line"><span class="dish__nr">' + esc(c.nr) + '</span>' +
+          '<span class="order-line__name">' + q + '× ' + esc(c.name) + label + '</span>' +
+          '<span class="order-line__price">' + price + '</span>' +
+          '<button class="icon-btn" type="button" data-remove="' + esc(k) + '" aria-label="Eine ' + esc(c.name + (c.label ? ' (' + c.label + ')' : '')) + ' entfernen">' +
+          '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></li>';
+      }).join('');
+      store.set('pp_order2', order);
+    };
+
+    var live = document.createElement('div');
+    live.className = 'sr-only'; live.setAttribute('aria-live', 'polite');
+    document.body.appendChild(live);
+
+    sources.forEach(function (el) {
+      el.addEventListener('click', function () {
+        var k = keyOf(el);
+        order[k] = Math.min(99, (order[k] || 0) + 1);
         render();
+        var c = catalog[k];
+        live.textContent = c.name + (c.label ? ' (' + c.label + ')' : '') + ' notiert.';
+        el.classList.add('is-bump');
+        setTimeout(function () { el.classList.remove('is-bump'); }, 250);
       });
     });
+
+    // Größenwahl bei Gerichten mit "klein / groß"
+    document.querySelectorAll('[data-pick]').forEach(function (btn) {
+      var box = document.getElementById(btn.getAttribute('data-pick'));
+      if (!box) return;
+      btn.addEventListener('click', function () {
+        var open = box.hidden;
+        box.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        if (open) box.querySelector('button').focus();
+      });
+    });
+
     toggle.addEventListener('click', function () { setSheet(sheet.hidden); });
     bar.querySelector('[data-order-close]').addEventListener('click', function () { setSheet(false); toggle.focus(); });
     bar.querySelector('[data-order-clear]').addEventListener('click', function () { order = {}; render(); });
     lines.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-remove]');
       if (!btn) return;
-      var nr = btn.getAttribute('data-remove');
-      order[nr] = (order[nr] || 0) - 1;
-      if (order[nr] <= 0) delete order[nr];
+      var k = btn.getAttribute('data-remove');
+      order[k] = (order[k] || 0) - 1;
+      if (order[k] <= 0) delete order[k];
       render();
     });
     render();
@@ -152,5 +217,54 @@
         loadMap();
       });
     }
+  }
+  /* ---------- Als App speichern (PWA) ---------- */
+  var manifestLink = document.querySelector('link[rel="manifest"]');
+  if ('serviceWorker' in navigator && manifestLink && window.isSecureContext) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register(new URL('sw.js', manifestLink.href).href).catch(function () { /* egal */ });
+    });
+  }
+
+  var promo = document.querySelector('[data-app-promo]');
+  if (promo) {
+    var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isIOSSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    var dismissed = store.get('pp_app_dismissed', 0);
+    var recentlyDismissed = dismissed && (Date.now() - dismissed) < 1000 * 60 * 60 * 24 * 30;
+    var installBtn = promo.querySelector('[data-install]');
+    var iosHint = promo.querySelector('[data-ios-hint]');
+    var deferred = null;
+
+    if (!standalone && !recentlyDismissed) {
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferred = e;
+        promo.hidden = false;
+      });
+      if (isIOSSafari) {
+        promo.hidden = false;
+        installBtn.textContent = 'So geht’s';
+      }
+    }
+    installBtn.addEventListener('click', function () {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (r) {
+          if (r.outcome === 'accepted') promo.hidden = true;
+          deferred = null;
+        });
+      } else {
+        iosHint.hidden = false;
+        installBtn.hidden = true;
+      }
+    });
+    promo.querySelector('[data-install-dismiss]').addEventListener('click', function () {
+      store.set('pp_app_dismissed', Date.now());
+      promo.hidden = true;
+    });
+    window.addEventListener('appinstalled', function () { promo.hidden = true; });
   }
 })();

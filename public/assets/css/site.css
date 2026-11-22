@@ -355,7 +355,7 @@ button { font: inherit; }
   .reviews__nav { justify-content: center; gap: 24px; }
   .visit { padding: 96px 0; }
 
-  .action-bar { left: auto; right: 24px; bottom: 24px; width: 380px; border-radius: 20px; border: 1px solid var(--line); background: transparent; box-shadow: none; padding: 0; }
+  .action-bar { left: auto; right: 24px; bottom: 24px; width: 380px; border-radius: 20px; border: 0; background: transparent; box-shadow: none; padding: 0; }
   .action-bar__row { display: none; }
   .order-toggle { box-shadow: 0 10px 24px rgba(42,30,23,.18); }
 }
@@ -365,3 +365,71 @@ button { font: inherit; }
   .main-nav a.header-phone { padding: 0 20px; color: #fff; }
   .main-nav a.header-phone::after { display: none; }
 }
+
+/* ---------- Pizza der Woche ---------- */
+.btn--gold { background: var(--gold); color: var(--ink); }
+.btn--gold:hover { color: var(--ink); background: #F2C85E; }
+.btn--ghost { border-color: rgba(246,239,226,.7); color: var(--cream); background: transparent; }
+.btn--ghost:hover { color: #fff; border-color: #fff; }
+.special { padding: 0 0 36px; }
+.special__card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--ink); color: var(--cream); border-radius: 24px; overflow: hidden; box-shadow: 0 18px 40px rgba(42,30,23,.22); }
+.special__media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #3B2C22; }
+.special__media img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); transition: transform 6s ease; }
+.special__card:hover .special__media img { transform: scale(1.12); }
+.special__stamp { position: absolute; top: 14px; right: 14px; width: 96px; height: 96px; border-radius: 50%; background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px; font-family: var(--serif); font-style: italic; font-weight: 600; font-size: 14px; line-height: 1.15; border: 3px dashed rgba(255,255,255,.7); box-shadow: 0 8px 20px rgba(0,0,0,.3); animation: pp-stamp 6s ease-in-out infinite; }
+.special__body { padding: 22px 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+.special__body h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; color: #fff; }
+.special__label { display: block; font-family: var(--sans); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+.special__body p { color: #E5D9C6; }
+.special__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.special__price strong { font-family: var(--serif); font-size: 34px; font-weight: 800; color: var(--gold); }
+.special__price s { color: #B8A58A; font-size: 17px; }
+.special__save { font-size: 13px; font-weight: 700; background: var(--green); color: #fff; padding: 3px 10px; border-radius: 999px; }
+.special__until { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: #D9CBB5; }
+.special__until .icon { width: 16px; height: 16px; }
+.special__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.special__actions .btn { box-shadow: none; }
+.btn.is-added { background: var(--green); color: #fff; }
+@keyframes pp-stamp { 0%, 100% { transform: rotate(-10deg) scale(1); } 50% { transform: rotate(-4deg) scale(1.06); } }
+.tag--week { background: var(--gold); color: var(--ink); text-decoration: none; }
+.tag--week:hover { color: var(--ink); }
+
+/* ---------- Größenwahl & Bestellzettel mit Preisen ---------- */
+.size-pick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; animation: pp-sheet .25s ease-out both; }
+.size-pick[hidden] { display: none; }
+.size-pick__btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--green); background: #fff; color: var(--green-dark); font-weight: 700; font-size: 15px; cursor: pointer; transition: transform .15s ease, background-color .2s ease; }
+.size-pick__btn b { color: var(--red); }
+.size-pick__btn .icon { width: 16px; height: 16px; }
+.size-pick__btn:active { transform: scale(.95); }
+.size-pick__btn.is-bump { background: #E3F0E6; }
+.add-btn[aria-expanded="true"] { background: var(--green); color: #fff; }
+.order-line__name { flex: 1; min-width: 0; }
+.order-line__name small { display: block; color: #B8A58A; font-size: 13px; }
+.order-line__price { font-weight: 700; color: var(--gold); white-space: nowrap; }
+.order-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 8px; font-size: 18px; }
+.order-total strong { font-family: var(--serif); font-size: 26px; color: var(--gold); }
+.order-note { font-size: 13px; color: #B8A58A; }
+.order-toggle__sum { color: var(--red); margin-left: 4px; }
+
+/* ---------- Als App speichern ---------- */
+.app-promo { padding: 0 0 40px; }
+.app-promo[hidden] { display: none; }
+.app-promo__card { display: flex; gap: 16px; align-items: flex-start; background: var(--paper); border: 2px dashed var(--green); border-radius: 20px; padding: 18px; animation: pp-up .6s ease-out both; }
+.app-promo__icon { width: 64px; height: 64px; border-radius: 16px; flex-shrink: 0; box-shadow: 0 6px 16px rgba(168,32,26,.25); }
+.app-promo__body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.app-promo h2 { font-size: 22px; font-weight: 800; }
+.app-promo p { font-size: 15px; color: var(--ink-2); }
+.app-promo__ios { background: #FBEFC9; border-radius: 10px; padding: 10px 12px; }
+.app-promo__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.btn-link { border: 0; background: none; color: var(--muted); font-weight: 600; text-decoration: underline; min-height: 44px; cursor: pointer; padding: 0 4px; }
+
+@media (min-width: 720px) {
+  .special__card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .special__media { aspect-ratio: auto; min-height: 380px; }
+  .special__body { padding: 40px; justify-content: center; }
+  .special__actions { flex-direction: row; flex-wrap: wrap; }
+  .app-promo__card { max-width: 720px; margin: 0 auto; }
+}
+@media (min-width: 1024px) { .special { padding-bottom: 56px; } }
+.order-toggle > span:first-child { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.order-toggle__sum { color: var(--green); margin-left: 0; }

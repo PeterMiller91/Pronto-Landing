@@ -12,7 +12,9 @@ Läuft direkt auf Netcup-Webhosting mit Plesk.
 **Website**
 - Live-Status „Aperto! Jetzt geöffnet bis 23 Uhr“ bzw. „Heute Ruhetag – morgen ab 17 Uhr“ (berücksichtigt Wochenplan, Sondertage und „heute spontan geschlossen“)
 - Speisekarte mit Kategorien, Nummern, Preisen (klein/groß), Kennzeichnungen und „heute ausverkauft“
-- Bestellzettel: Gäste tippen auf **+**, sammeln Nummern und lesen sie beim Anruf vor (bleibt im Browser gespeichert)
+- Bestellzettel mit Preisen und Summe: Gäste tippen auf **+** (bei zwei Größen: klein/groß wählen), sehen die Summe und lesen die Nummern beim Anruf vor (bleibt im Browser gespeichert)
+- **Pizza der Woche**: große Aktionskarte unter dem Startbild mit Aktionspreis („Du sparst …“), Enddatum und Knopf „Auf den Bestellzettel“
+- **Als App speicherbar (PWA)**: Pizza-Symbol auf dem Startbildschirm, Kurzbefehle „Speisekarte“ und „Pizza der Woche“, Speisekarte auch ohne Netz (zuletzt geladener Stand)
 - Echte Google-Bewertungen (Karussell) + Link zu allen Bewertungen
 - Google Maps per **2-Klick-Lösung** (lädt erst nach Klick, DSGVO) + „Route planen“
 - Hinweis-Leiste oben (z. B. Betriebsurlaub), automatisch ausblendbar
@@ -26,6 +28,7 @@ Läuft direkt auf Netcup-Webhosting mit Plesk.
 - Speisekarte: Gerichte anlegen/bearbeiten/löschen, Preise, Kennzeichnungen, Verfügbarkeit per Schalter, Suche
 - Öffnungszeiten: Wochenplan inkl. optionaler 2. Schicht (Mittag), Sondertage & Urlaub
 - Hinweis-Leiste mit Live-Vorschau, Farbe und Ablaufdatum
+- Pizza der Woche: Pizza wählen, Verkaufstext, Aktionspreis, Enddatum und Foto (`/admin/special.php`, Kachel auf der Übersicht)
 - Fotos: Upload (Handy-Fotos werden automatisch verkleinert), Startbild wählen, Titel, Löschen
 - Passwort ändern
 
