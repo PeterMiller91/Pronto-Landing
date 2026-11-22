@@ -65,6 +65,10 @@ pronto-landing/
 
 **Passwort vergessen?** `setup_token` vorübergehend wieder eintragen, `setup.php` aufrufen und mit derselben E-Mail ein neues Passwort setzen. Danach den Token wieder leeren.
 
+## Speisekarte
+
+Die echte Karte (Pizza Ø 26/30 cm, Familienpizza 49 × 32 / 60 × 40 cm, Pasta, Insalate, Weine) inkl. Preisen, Zusatzstoffen und Hinweisen steht in `app/menu_data.php`. Sie wird bei der Einrichtung eingespielt. Bestehende Installationen werden beim ersten Aufruf automatisch aktualisiert (Datenbank-Version 2) – danach pflegt der Inhaber alles im Backend.
+
 ## Lokal testen
 
 ```bash
@@ -77,8 +81,7 @@ php -S 127.0.0.1:8080 -t public
 
 - [ ] **Impressum** (`public/impressum.php`): Inhabername, E-Mail, ggf. USt-IdNr.
 - [ ] **Datenschutzerklärung** (`public/datenschutz.php`): Entwurf prüfen und ergänzen lassen
-- [ ] **Preise** im Backend bei allen Gerichten eintragen (ohne Preis zeigt die Website keinen an)
-- [ ] Speisekarte mit der echten Karte abgleichen (Pizza Bianca, Rigatoni alla Panna und Chef-Salat stammen aus den Gäste-Bewertungen)
+- [ ] Speisekarte im Backend stichprobenartig mit der gedruckten Karte vergleichen (übernommen aus Fotos der Karte, `app/menu_data.php`)
 - [ ] Lieferinfo prüfen (`delivery_note` in der Tabelle `settings`)
 - [ ] Weitere Fotos hochladen (Diavola, Ofen, Gastraum …)
 

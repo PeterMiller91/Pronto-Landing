@@ -117,4 +117,13 @@
     if (!out) return;
     ta.addEventListener('input', function () { out.textContent = String((parseInt(ta.getAttribute('maxlength'), 10) || 0) - ta.value.length); });
   });
+  // Zusatzstoffe-Auswahl -> verstecktes Feld "2,6,7"
+  var addHidden = document.querySelector('[data-additives]');
+  if (addHidden) {
+    var boxes = document.querySelectorAll('[data-additive]');
+    var sync = function () {
+      addHidden.value = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).map(function (b) { return b.value; }).join(',');
+    };
+    boxes.forEach(function (b) { b.addEventListener('change', sync); });
+  }
 })();

@@ -74,14 +74,32 @@ function dish(int $id): ?array
     return db_one('SELECT * FROM dishes WHERE id = ?', [$id]);
 }
 
-function dish_price_label(array $d): string
+/** Größen-Bezeichnungen einer Kategorie (z. B. "Ø 26 cm" / "Ø 30 cm"). */
+function size_labels(?array $cat): array
+{
+    $small = trim((string) ($cat['size_small'] ?? ''));
+    $large = trim((string) ($cat['size_large'] ?? ''));
+    return [$small !== '' ? $small : 'klein', $large !== '' ? $large : 'groß'];
+}
+
+function dish_price_label(array $d, ?array $cat = null): string
 {
     $small = $d['price_cents'] !== null ? (int) $d['price_cents'] : null;
     $large = $d['price_large_cents'] !== null ? (int) $d['price_large_cents'] : null;
     if ($small !== null && $large !== null) {
-        return 'klein ' . format_price($small) . ' · groß ' . format_price($large);
+        [$ls, $ll] = size_labels($cat);
+        return $ls . ' ' . format_price($small) . ' · ' . $ll . ' ' . format_price($large);
     }
     return format_price($small ?? $large);
+}
+
+/** "2,6,7" -> [2, 6, 7] (nur gültige Nummern) */
+function additive_numbers(string $s): array
+{
+    $nums = array_map('intval', preg_split('/[^0-9]+/', $s, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+    $nums = array_values(array_unique(array_filter($nums, fn ($n) => isset(ADDITIVES_LEGEND[$n]))));
+    sort($nums);
+    return $nums;
 }
 
 function count_dishes(): array
@@ -201,47 +219,8 @@ function seed_database(): void
     }
     $now = now();
 
-    $cats = [
-        ['pizza', 'Pizza', 1, [
-            ['1', 'Margherita', 'Der Klassiker aus Neapel: Tomate, Mozzarella, frisches Basilikum', 1, 0, 0, 1],
-            ['2', 'Salame', 'Mit würziger italienischer Salami', 0, 0, 0, 0],
-            ['3', 'Prosciutto e Funghi', 'Kochschinken und Champignons – ein Lieblingspaar', 0, 0, 0, 0],
-            ['4', 'Tonno', 'Thunfisch und rote Zwiebeln', 0, 0, 0, 0],
-            ['5', 'Quattro Stagioni', 'Vier Jahreszeiten auf einer Pizza: Schinken, Champignons, Artischocken, Oliven', 0, 0, 0, 0],
-            ['6', 'Diavola', 'Für Mutige: scharfe Salami, Peperoni, Chili – piccante!', 0, 1, 0, 0],
-            ['7', 'Vegetariana', 'Ein ganzer Gemüsegarten: Paprika, Zucchini, Aubergine, Champignons', 1, 0, 0, 0],
-            ['8', 'Pizza Bianca', 'Ohne Tomatensauce – cremig, mild und herrlich anders', 1, 0, 0, 0],
-            ['9', 'Pronto Pronto', 'Die Pizza, die unseren Namen trägt – Belag nach Art des Chefs', 0, 0, 0, 1],
-        ]],
-        ['pasta', 'Pasta', 2, [
-            ['20', 'Spaghetti Bolognese', 'Mit kräftiger Fleischsauce, wie bei der Nonna', 0, 0, 0, 0],
-            ['21', 'Penne all’Arrabbiata', '„Arrabbiata“ heißt wütend: scharfe Tomatensauce mit Knoblauch', 1, 1, 0, 0],
-            ['22', 'Spaghetti Carbonara', 'Speck, Ei, Parmesan und schwarzer Pfeffer', 0, 0, 0, 0],
-            ['23', 'Rigatoni alla Panna', 'Kurze Röhrennudeln in feiner Sahnesauce', 0, 0, 0, 0],
-            ['24', 'Lasagne al Forno', 'Schicht für Schicht im Ofen überbacken', 0, 0, 0, 0],
-        ]],
-        ['insalate', 'Insalate', 3, [
-            ['40', 'Insalata Mista', 'Bunter Salat der Saison', 1, 0, 0, 0],
-            ['41', 'Insalata Caprese', 'Tomate, Mozzarella, Basilikum und Olivenöl', 1, 0, 0, 0],
-            ['42', 'Chef-Salat', 'Der große Salat nach Art des Hauses', 0, 0, 0, 0],
-        ]],
-        ['dolci', 'Dolci', 4, [
-            ['60', 'Tiramisù', '„Zieh mich hoch“ – der Muntermacher nach dem Essen', 1, 0, 0, 0],
-            ['61', 'Panna Cotta', 'Zart und cremig, mit Beerensauce', 1, 0, 0, 0],
-        ]],
-    ];
-
-    foreach ($cats as [$slug, $name, $sort, $dishes]) {
-        $catId = db_insert('categories', ['slug' => $slug, 'name' => $name, 'sort' => $sort]);
-        foreach ($dishes as $i => [$nr, $dname, $desc, $veg, $hot, $new, $rec]) {
-            db_insert('dishes', [
-                'category_id' => $catId, 'nr' => $nr, 'name' => $dname, 'description' => $desc,
-                'price_cents' => null, 'price_large_cents' => null,
-                'is_vegetarian' => $veg, 'is_spicy' => $hot, 'is_new' => $new, 'is_recommended' => $rec,
-                'is_available' => 1, 'sort' => $i, 'updated_at' => $now,
-            ]);
-        }
-    }
+    import_real_menu();
+    set_setting('schema_version', (string) SCHEMA_VERSION);
 
     foreach (range(0, 6) as $d) {
         db_insert('opening_hours', [

@@ -36,6 +36,18 @@ if (is_post()) {
         redirect($back);
     }
 
+    if ($action === 'save_category') {
+        db_update('categories', [
+            'name' => mb_substr(post('cat_name') ?: (string) $cat['name'], 0, 60),
+            'size_small' => mb_substr(post('size_small'), 0, 40),
+            'size_large' => mb_substr(post('size_large'), 0, 40),
+            'note' => mb_substr(post('note'), 0, 400),
+        ], 'id = ?', [$cat['id']]);
+        log_activity('Kategorie „' . (post('cat_name') ?: $cat['name']) . '“ angepasst');
+        flash('Kategorie gespeichert.');
+        redirect($back);
+    }
+
     if ($action === 'save') {
         $name = mb_substr(post('name'), 0, 120);
         $priceIn = post('price');
@@ -65,6 +77,7 @@ if (is_post()) {
             'nr' => mb_substr(post('nr'), 0, 8),
             'name' => $name,
             'description' => mb_substr(post('description'), 0, 400),
+            'additives' => implode(',', additive_numbers(post('additives'))),
             'price_cents' => $price,
             'price_large_cents' => $priceLarge,
             'is_vegetarian' => isset($_POST['is_vegetarian']) ? 1 : 0,
@@ -98,7 +111,7 @@ if ($editParam === 'new') {
     if ($last && ctype_digit((string) $last['nr'])) {
         $nextNr = (string) ((int) $last['nr'] + 1);
     }
-    $editing = ['id' => 0, 'category_id' => $cat['id'], 'nr' => $nextNr, 'name' => '', 'description' => '', 'price_cents' => null, 'price_large_cents' => null, 'is_vegetarian' => 0, 'is_spicy' => 0, 'is_new' => 0, 'is_recommended' => 0];
+    $editing = ['id' => 0, 'category_id' => $cat['id'], 'nr' => $nextNr, 'name' => '', 'description' => '', 'price_cents' => null, 'price_large_cents' => null, 'additives' => '', 'is_vegetarian' => 0, 'is_spicy' => 0, 'is_new' => 0, 'is_recommended' => 0];
 } elseif ($editParam !== '' && ctype_digit($editParam)) {
     $editing = dish((int) $editParam);
 }
@@ -128,8 +141,9 @@ require APP_DIR . '/views/admin_header.php';
     <textarea class="textarea" id="description" name="description" maxlength="400" rows="3"><?= e($editing['description']) ?></textarea>
   </div>
   <div class="grid-2">
-    <div class="field"><label for="price">Preis <small>(bzw. klein)</small></label><input class="input" id="price" name="price" inputmode="decimal" placeholder="z. B. 8,50" value="<?= e($priceField($editing['price_cents'] !== null ? (int) $editing['price_cents'] : null)) ?>"></div>
-    <div class="field"><label for="price_large">Preis groß <small>(optional)</small></label><input class="input" id="price_large" name="price_large" inputmode="decimal" placeholder="z. B. 11,50" value="<?= e($priceField($editing['price_large_cents'] !== null ? (int) $editing['price_large_cents'] : null)) ?>"></div>
+    <?php $editCat = db_one('SELECT * FROM categories WHERE id = ?', [(int) $editing['category_id']]); [$ls, $ll] = size_labels($editCat); ?>
+    <div class="field"><label for="price">Preis <small>(bzw. <?= e($ls) ?>)</small></label><input class="input" id="price" name="price" inputmode="decimal" placeholder="z. B. 8,50" value="<?= e($priceField($editing['price_cents'] !== null ? (int) $editing['price_cents'] : null)) ?>"></div>
+    <div class="field"><label for="price_large">Preis <?= e($ll) ?> <small>(optional)</small></label><input class="input" id="price_large" name="price_large" inputmode="decimal" placeholder="z. B. 11,50" value="<?= e($priceField($editing['price_large_cents'] !== null ? (int) $editing['price_large_cents'] : null)) ?>"></div>
   </div>
   <div class="field">
     <label for="category_id">Kategorie</label>
@@ -137,6 +151,16 @@ require APP_DIR . '/views/admin_header.php';
       <?php foreach ($cats as $c): ?><option value="<?= (int) $c['id'] ?>" <?= (int) $c['id'] === (int) $editing['category_id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
     </select>
   </div>
+  <fieldset class="field" style="border:0;margin:0;padding:0">
+    <legend style="margin-bottom:8px">Zusatzstoffe</legend>
+    <?php $sel = additive_numbers((string) ($editing['additives'] ?? '')); ?>
+    <input type="hidden" name="additives" value="<?= e(implode(',', $sel)) ?>" data-additives>
+    <div class="chips">
+      <?php foreach (ADDITIVES_LEGEND as $n => $label): ?>
+      <label class="chip"><input type="checkbox" value="<?= $n ?>" data-additive <?= in_array($n, $sel, true) ? 'checked' : '' ?>><span><?= $n ?>) <?= e(str_replace('mit ', '', $label)) ?></span></label>
+      <?php endforeach; ?>
+    </div>
+  </fieldset>
   <fieldset class="field" style="border:0;margin:0;padding:0">
     <legend style="margin-bottom:8px">Kennzeichnung</legend>
     <div class="chips">
@@ -175,9 +199,9 @@ require APP_DIR . '/views/admin_header.php';
 <div class="panel panel--flush">
   <?php foreach ($dishes as $d):
       $avail = (int) $d['is_available'] === 1;
-      $price = dish_price_label($d); ?>
+      $price = dish_price_label($d, $cat); ?>
   <div class="dish-row<?= $avail ? '' : ' dish-row--off' ?>" data-dish="<?= e(mb_strtolower($d['nr'] . ' ' . $d['name'])) ?>">
-    <span class="dish__nr"><?= e($d['nr']) ?></span>
+    <span class="dish__nr<?= $d['nr'] === '' ? ' dish__nr--empty' : '' ?>"><?= e($d['nr']) ?></span>
     <div class="dish-row__body">
       <span class="dish-row__name"><?= e($d['name']) ?></span>
       <span class="dish-row__sub"><?= $avail ? e(($price ?: 'Preis fehlt') . ' · verfügbar') : 'Heute ausverkauft' ?></span>
@@ -197,6 +221,21 @@ require APP_DIR . '/views/admin_header.php';
   <?php if (!$dishes): ?><p class="search-empty">Noch keine Gerichte in dieser Kategorie.</p><?php endif; ?>
 </div>
 <p class="hint">Schalter aus = „heute ausverkauft“. Das Gericht bleibt auf der Karte, wird aber durchgestrichen angezeigt. Ohne Preis zeigt die Website einfach keinen Preis an.</p>
+
+<details class="panel">
+  <summary>Kategorie „<?= e($cat['name']) ?>“: Größen &amp; Hinweis</summary>
+  <form method="post" action="" style="display:flex;flex-direction:column;gap:12px">
+    <?= csrf_field() ?>
+    <input type="hidden" name="action" value="save_category">
+    <div class="field"><label for="cat_name">Name der Kategorie</label><input class="input" id="cat_name" name="cat_name" maxlength="60" value="<?= e($cat['name']) ?>"></div>
+    <div class="grid-2">
+      <div class="field"><label for="size_small">Größe 1</label><input class="input" id="size_small" name="size_small" maxlength="40" value="<?= e($cat['size_small'] ?? '') ?>" placeholder="z. B. Ø 26 cm"></div>
+      <div class="field"><label for="size_large">Größe 2</label><input class="input" id="size_large" name="size_large" maxlength="40" value="<?= e($cat['size_large'] ?? '') ?>" placeholder="z. B. Ø 30 cm"></div>
+    </div>
+    <div class="field"><label for="note">Hinweis unter der Kategorie <small>(z. B. Extra-Zutaten)</small></label><textarea class="textarea" id="note" name="note" maxlength="400" rows="3"><?= e($cat['note'] ?? '') ?></textarea></div>
+    <button class="btn btn--green btn--block" type="submit">Kategorie speichern</button>
+  </form>
+</details>
 
 <a class="fab" href="<?= e(url('admin/menu.php?cat=' . rawurlencode($cat['slug']) . '&edit=new')) ?>"><?= icon('plus') ?>Neues Gericht</a>
 <?php endif; ?>
