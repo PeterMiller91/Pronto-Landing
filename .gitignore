@@ -1,0 +1,6 @@
+app/config.local.php
+storage/*.sqlite
+storage/*.sqlite-journal
+public/uploads/*
+!public/uploads/.htaccess
+!public/uploads/.gitkeep

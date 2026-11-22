@@ -1,0 +1,92 @@
+-- Pizzeria Pronto Pronto – Datenbankschema (SQLite, für lokale Tests)
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL DEFAULT '',
+  password_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  last_login_at TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  email TEXT NOT NULL DEFAULT '',
+  attempted_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_attempts ON login_attempts (ip, attempted_at);
+
+CREATE TABLE IF NOT EXISTS settings (
+  name TEXT NOT NULL PRIMARY KEY,
+  value TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  sort INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS dishes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  nr TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  price_cents INTEGER NULL,
+  price_large_cents INTEGER NULL,
+  is_vegetarian INTEGER NOT NULL DEFAULT 0,
+  is_spicy INTEGER NOT NULL DEFAULT 0,
+  is_new INTEGER NOT NULL DEFAULT 0,
+  is_recommended INTEGER NOT NULL DEFAULT 0,
+  is_available INTEGER NOT NULL DEFAULT 1,
+  sort INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS opening_hours (
+  weekday INTEGER NOT NULL PRIMARY KEY,
+  is_open INTEGER NOT NULL DEFAULT 1,
+  open_time TEXT NOT NULL DEFAULT '17:00',
+  close_time TEXT NOT NULL DEFAULT '23:00',
+  open_time2 TEXT NULL,
+  close_time2 TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS special_days (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date_from TEXT NOT NULL,
+  date_to TEXT NOT NULL,
+  title TEXT NOT NULL,
+  is_closed INTEGER NOT NULL DEFAULT 1,
+  open_time TEXT NULL,
+  close_time TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filename TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  is_hero INTEGER NOT NULL DEFAULT 0,
+  sort INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  author TEXT NOT NULL,
+  text TEXT NOT NULL,
+  rating INTEGER NOT NULL DEFAULT 5,
+  source TEXT NOT NULL DEFAULT 'Google',
+  is_visible INTEGER NOT NULL DEFAULT 1,
+  sort INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS activity_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
