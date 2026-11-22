@@ -51,14 +51,14 @@
     // Katalog aus der Seite: jede Bestell-Variante (Gericht + Größe) hat einen Schlüssel
     var sources = Array.prototype.slice.call(document.querySelectorAll('[data-add]'));
     var catalog = {};
-    var keyOf = function (el) { return el.dataset.nr + '|' + (el.dataset.variant || ''); };
+    var keyOf = function (el) { return el.dataset.id + '|' + (el.dataset.variant || ''); };
     sources.forEach(function (el) {
       var p = el.dataset.price;
-      catalog[keyOf(el)] = { nr: el.dataset.nr, name: el.dataset.name, label: el.dataset.label || '', price: p === '' || p === undefined ? null : parseInt(p, 10) };
+      catalog[keyOf(el)] = { id: el.dataset.id, nr: el.dataset.nr, name: el.dataset.name, label: el.dataset.label || '', price: p === '' || p === undefined ? null : parseInt(p, 10) };
     });
 
     // Gespeicherten Zettel laden, nur noch gültige Gerichte behalten (Preise immer aktuell aus der Seite)
-    var saved = store.get('pp_order2', {}) || {};
+    var saved = store.get('pp_order3', {}) || {};
     var order = {};
     Object.keys(saved).forEach(function (k) { if (catalog[k] && saved[k] > 0) order[k] = Math.min(99, saved[k] | 0); });
 
@@ -81,7 +81,9 @@
 
     var render = function () {
       var keys = Object.keys(order).sort(function (a, b) {
-        var na = parseInt(a, 10), nb = parseInt(b, 10), rank = { '': 0, k: 1, g: 2, w: 3 };
+        var ca = catalog[a], cb = catalog[b], rank = { '': 0, k: 1, g: 2, w: 3 };
+        if (ca.label !== cb.label && (ca.label.indexOf('Familienpizza') === 0) !== (cb.label.indexOf('Familienpizza') === 0)) return ca.label.indexOf('Familienpizza') === 0 ? 1 : -1;
+        var na = parseInt(ca.nr, 10) || 999, nb = parseInt(cb.nr, 10) || 999;
         return na !== nb ? na - nb : rank[a.split('|')[1]] - rank[b.split('|')[1]];
       });
       var count = 0, sum = 0, unknown = 0;
@@ -94,7 +96,7 @@
       // Zähler an den Plus-Knöpfen (alle Größen zusammen, ohne Aktions-Variante)
       mainBtns.forEach(function (b) {
         var n = 0;
-        keys.forEach(function (k) { if (catalog[k].nr === b.dataset.nr && k.slice(-2) !== '|w') n += order[k]; });
+        keys.forEach(function (k) { if (catalog[k].id === b.dataset.id && k.slice(-2) !== '|w') n += order[k]; });
         b.dataset.count = String(n);
         b.querySelector('.add-btn__count').textContent = n ? String(n) : '';
       });
@@ -118,13 +120,13 @@
         var c = catalog[k], q = order[k];
         var label = c.label ? ' <small>' + esc(c.label) + (c.price !== null ? ' · je ' + euro(c.price) : '') + '</small>' : (c.price !== null && q > 1 ? ' <small>je ' + euro(c.price) + '</small>' : '');
         var price = c.price === null ? 'Preis am Telefon' : euro(c.price * q);
-        return '<li class="order-line"><span class="dish__nr">' + esc(c.nr) + '</span>' +
+        return '<li class="order-line"><span class="dish__nr' + (c.nr ? '' : ' dish__nr--empty') + '">' + esc(c.nr) + '</span>' +
           '<span class="order-line__name">' + q + '× ' + esc(c.name) + label + '</span>' +
           '<span class="order-line__price">' + price + '</span>' +
           '<button class="icon-btn" type="button" data-remove="' + esc(k) + '" aria-label="Eine ' + esc(c.name + (c.label ? ' (' + c.label + ')' : '')) + ' entfernen">' +
           '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button></li>';
       }).join('');
-      store.set('pp_order2', order);
+      store.set('pp_order3', order);
     };
 
     var live = document.createElement('div');
@@ -167,6 +169,14 @@
       render();
     });
     render();
+  }
+
+  /* ---------- Zusatzstoffe aufklappen ---------- */
+  var adds = document.getElementById('zusatzstoffe');
+  if (adds) {
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('a[href="#zusatzstoffe"]')) adds.open = true;
+    });
   }
 
   /* ---------- Gästestimmen ---------- */

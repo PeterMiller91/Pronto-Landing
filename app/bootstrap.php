@@ -17,6 +17,17 @@ require __DIR__ . '/auth.php';
 require __DIR__ . '/data.php';
 require __DIR__ . '/status.php';
 require __DIR__ . '/images.php';
+require __DIR__ . '/menu_data.php';
+require __DIR__ . '/migrate.php';
+
+// Datenbank automatisch auf den neuesten Stand bringen (einmalig, danach nur ein kurzer Check)
+try {
+    if (db_is_installed()) {
+        migrate();
+    }
+} catch (Throwable $ex) {
+    error_log('Pronto Pronto Migration: ' . $ex->getMessage());
+}
 
 // Grundlegende Sicherheits-Header (zusätzlich zur .htaccess)
 if (!headers_sent()) {

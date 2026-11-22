@@ -79,7 +79,7 @@ require APP_DIR . '/views/site_header.php';
         <svg class="deco deco--3" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#C8352C"/><circle cx="9" cy="9" r="2" fill="#E87A6F"/></svg>
         <div class="badge-pronto"><strong>Pronto, pronto!</strong><span>Italienisch für: fertig – und schon unterwegs</span></div>
       </div>
-      <figcaption class="hero__caption">Die <?= e($heroLabel) ?> von Pronto Pronto: Tomate, Mozzarella, Basilikum – die Farben Italiens auf einem Teller.</figcaption>
+      <figcaption class="hero__caption">Frisch aus dem Ofen: über 50 Pizzen von Natura bis Nudelpizza – auch als Familienpizza bis 60 × 40 cm.</figcaption>
     </figure>
 
     <span class="kicker anim-in d2">Benvenuti a Vohenstrauß!</span>
@@ -142,7 +142,7 @@ require APP_DIR . '/views/site_header.php';
         <?php endif; ?>
         <div class="special__actions">
           <?php if ($sAvailable): ?>
-          <button class="btn btn--gold" type="button" data-add data-nr="<?= e($sd['nr']) ?>" data-name="<?= e($sd['name']) ?>" data-variant="w" data-label="Pizza der Woche" data-price="<?= e($cents($sPrice)) ?>">
+          <button class="btn btn--gold" type="button" data-add data-id="<?= (int) $sd['id'] ?>" data-nr="<?= e($sd['nr']) ?>" data-name="<?= e($sd['name']) ?>" data-variant="w" data-label="Pizza der Woche" data-price="<?= e($cents($sPrice)) ?>">
             <?= icon('plus') ?><span data-add-text>Auf den Bestellzettel</span>
           </button>
           <?php else: ?>
@@ -159,7 +159,7 @@ require APP_DIR . '/views/site_header.php';
 <div class="marquee" aria-hidden="true">
   <div class="marquee__track">
     <?php for ($i = 0; $i < 2; $i++): ?>
-    <span>Margherita ✦ Diavola ✦ Pizza Bianca ✦ Rigatoni alla Panna ✦ Tiramisù ✦ Buon appetito ✦ Pronto Pronto ✦ Mamma mia ✦</span>
+    <span>Margherita ✦ Diavolo ✦ Calzone ✦ Quattro Formaggi ✦ Familienpizza ✦ Penne all’Arrabbiata ✦ Buon appetito ✦ Pronto Pronto ✦ Mamma mia ✦</span>
     <?php endfor; ?>
   </div>
 </div>
@@ -182,12 +182,17 @@ require APP_DIR . '/views/site_header.php';
     <?php foreach ($menu as $i => $group): ?>
     <div class="menu__panel card" role="tabpanel" id="panel-<?= e($group['category']['slug']) ?>" aria-labelledby="tab-<?= e($group['category']['slug']) ?>" <?= $i === 0 ? '' : 'hidden' ?>>
       <ul class="menu__list">
-        <?php foreach ($group['dishes'] as $d):
+        <?php
+            $cat = $group['category'];
+            [$sizeS, $sizeL] = size_labels($cat);
+            $labelPrefix = $cat['slug'] === 'familienpizza' ? 'Familienpizza ' : '';
+            foreach ($group['dishes'] as $d):
             $available = (int) $d['is_available'] === 1;
-            $price = dish_price_label($d);
+            $price = dish_price_label($d, $cat);
+            $adds = additive_numbers((string) ($d['additives'] ?? ''));
             $twoPrices = $d['price_cents'] !== null && $d['price_large_cents'] !== null; ?>
         <li class="dish<?= $available ? '' : ' dish--soldout' ?>">
-          <span class="dish__nr"><?= e($d['nr']) ?></span>
+          <?php if ($d['nr'] !== ''): ?><span class="dish__nr"><?= e($d['nr']) ?></span><?php else: ?><span class="dish__nr dish__nr--empty" aria-hidden="true"></span><?php endif; ?>
           <div class="dish__body">
             <div class="dish__top">
               <span class="dish__name"><?= e($d['name']) ?></span>
@@ -197,7 +202,7 @@ require APP_DIR . '/views/site_header.php';
               <?php endif; ?>
             </div>
             <?php if ($twoPrices): ?><span class="dish__prices"><?= e($price) ?></span><?php endif; ?>
-            <?php if ($d['description'] !== ''): ?><span class="dish__desc"><?= e($d['description']) ?></span><?php endif; ?>
+            <?php if ($d['description'] !== '' || $adds): ?><span class="dish__desc"><?= e($d['description']) ?><?php if ($adds): ?> <a class="dish__adds" href="#zusatzstoffe" title="Zusatzstoffe: <?= e(implode(', ', array_map(fn ($n) => ADDITIVES_LEGEND[$n], $adds))) ?>">(<?= e(implode(',', $adds)) ?>)</a><?php endif; ?></span><?php endif; ?>
             <?php $isSpecial = (int) $d['id'] === $specialId; ?>
             <?php if (!$available || $isSpecial || $d['is_vegetarian'] || $d['is_spicy'] || $d['is_new'] || $d['is_recommended']): ?>
             <span class="dish__tags">
@@ -211,26 +216,35 @@ require APP_DIR . '/views/site_header.php';
             <?php endif; ?>
             <?php if ($twoPrices && $available): ?>
             <div class="size-pick" id="size-<?= (int) $d['id'] ?>" role="group" aria-label="Größe für <?= e($d['name']) ?> wählen" hidden>
-              <button type="button" class="size-pick__btn" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="k" data-label="klein" data-price="<?= e($cents($d['price_cents'])) ?>">klein <b><?= e(format_price((int) $d['price_cents'])) ?></b> <?= icon('plus') ?></button>
-              <button type="button" class="size-pick__btn" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="g" data-label="groß" data-price="<?= e($cents($d['price_large_cents'])) ?>">groß <b><?= e(format_price((int) $d['price_large_cents'])) ?></b> <?= icon('plus') ?></button>
+              <button type="button" class="size-pick__btn" data-add data-id="<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="k" data-label="<?= e($labelPrefix . $sizeS) ?>" data-price="<?= e($cents($d['price_cents'])) ?>"><?= e($sizeS) ?> <b><?= e(format_price((int) $d['price_cents'])) ?></b> <?= icon('plus') ?></button>
+              <button type="button" class="size-pick__btn" data-add data-id="<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="g" data-label="<?= e($labelPrefix . $sizeL) ?>" data-price="<?= e($cents($d['price_large_cents'])) ?>"><?= e($sizeL) ?> <b><?= e(format_price((int) $d['price_large_cents'])) ?></b> <?= icon('plus') ?></button>
             </div>
             <?php endif; ?>
           </div>
           <?php if ($twoPrices): ?>
-          <button class="add-btn" type="button" data-pick="size-<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-count="0" aria-expanded="false" aria-controls="size-<?= (int) $d['id'] ?>" aria-label="<?= e($d['name']) ?>: Größe wählen und auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
+          <button class="add-btn" type="button" data-pick="size-<?= (int) $d['id'] ?>" data-id="<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-count="0" aria-expanded="false" aria-controls="size-<?= (int) $d['id'] ?>" aria-label="<?= e($d['name']) ?>: Größe wählen und auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
             <?= icon('plus') ?><span class="add-btn__count" aria-hidden="true"></span>
           </button>
           <?php else: ?>
-          <button class="add-btn" type="button" data-add data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="" data-label="" data-price="<?= e($cents($d['price_cents'] ?? $d['price_large_cents'])) ?>" data-count="0" aria-label="<?= e($d['name']) ?> auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
+          <button class="add-btn" type="button" data-add data-id="<?= (int) $d['id'] ?>" data-nr="<?= e($d['nr']) ?>" data-name="<?= e($d['name']) ?>" data-variant="" data-label="<?= e($labelPrefix) ?>" data-price="<?= e($cents($d['price_cents'] ?? $d['price_large_cents'])) ?>" data-count="0" aria-label="<?= e($d['name']) ?> auf den Bestellzettel"<?= $available ? '' : ' disabled' ?>>
             <?= icon('plus') ?><span class="add-btn__count" aria-hidden="true"></span>
           </button>
           <?php endif; ?>
         </li>
         <?php endforeach; ?>
       </ul>
-      <p class="menu__note">Extra-Zutaten, kleine oder große Pizza, Fragen zu Allergenen? Frag uns einfach am Telefon.</p>
+      <?php if (trim((string) ($cat['note'] ?? '')) !== ''): ?><p class="menu__catnote"><?= e($cat['note']) ?></p><?php endif; ?>
+      <p class="menu__note">Extra-Wünsche oder Fragen zu Allergenen? Frag uns einfach am Telefon.</p>
     </div>
     <?php endforeach; ?>
+
+    <details class="additives" id="zusatzstoffe">
+      <summary>Zusatzstoffe &amp; Hinweise</summary>
+      <ol>
+        <?php foreach (ADDITIVES_LEGEND as $n => $label): ?><li value="<?= $n ?>"><?= e($label) ?></li><?php endforeach; ?>
+      </ol>
+      <p>Wir verwenden für alle unsere Speisen Vorderschinken. Alle Preise inkl. Bedienung und MwSt.</p>
+    </details>
   </div>
 </section>
 
