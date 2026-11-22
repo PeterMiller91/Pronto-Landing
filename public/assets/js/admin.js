@@ -111,4 +111,10 @@
       shrink(input.files[0], function () { up.submit(); });
     });
   }
+  // Zeichenzähler (z. B. Pizza der Woche)
+  document.querySelectorAll('[data-count-source]').forEach(function (ta) {
+    var out = document.querySelector('[data-count-for="' + ta.id + '"]');
+    if (!out) return;
+    ta.addEventListener('input', function () { out.textContent = String((parseInt(ta.getAttribute('maxlength'), 10) || 0) - ta.value.length); });
+  });
 })();

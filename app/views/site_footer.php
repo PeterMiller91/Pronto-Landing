@@ -26,11 +26,13 @@ $withActionBar ??= false;
     </div>
     <p>Lies uns am Telefon einfach diese Nummern vor:</p>
     <ul data-order-lines></ul>
+    <div class="order-total"><span data-order-total-label>Summe</span><strong data-order-total>0,00 €</strong></div>
+    <p class="order-note" data-order-note>Zzgl. eventueller Lieferkosten. Extras berechnen wir am Telefon.</p>
     <a class="btn btn--red btn--block" href="tel:<?= e($site['phone_e164']) ?>"><?= icon('phone') ?>Anrufen &amp; Nummern durchgeben</a>
     <button class="btn-ghost-light" type="button" data-order-clear>Zettel leeren</button>
   </section>
   <button class="order-toggle" type="button" data-order-toggle aria-expanded="false" aria-controls="order-sheet" hidden>
-    <span><?= icon('receipt') ?> Bestellzettel · <span data-order-count>0 Gerichte</span></span>
+    <span><?= icon('receipt') ?> <span class="sr-only">Bestellzettel: </span><span data-order-count>0 Gerichte</span><span class="order-toggle__sum" data-order-sum></span></span>
     <span data-order-hint>ansehen ↑</span>
   </button>
   <div class="action-bar__row">

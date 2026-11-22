@@ -172,3 +172,15 @@ details.panel summary::-webkit-details-marker { display: none; }
 .day-row__times { flex-basis: 100%; justify-content: flex-start; padding-left: 66px; }
 .shift2 { justify-content: flex-start; }
 @media (min-width: 560px) { .day-row__times { flex-basis: auto; justify-content: flex-end; padding-left: 0; } .shift2 { justify-content: flex-end; } }
+
+/* Pizza der Woche */
+.tile--wide { position: relative; overflow: hidden; min-height: 0; background: linear-gradient(0deg, #FBEFC9, #FBEFC9); border-color: var(--gold); }
+.tile--wide .icon { color: var(--red); }
+.tile__stamp { position: absolute; right: -34px; top: 18px; transform: rotate(18deg); background: var(--red); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 40px; letter-spacing: .5px; }
+.photo-pick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.photo-pick__item { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; cursor: pointer; background: #E7D9C1; }
+.photo-pick__item input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.photo-pick__item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-pick__none { display: flex; align-items: center; justify-content: center; text-align: center; height: 100%; font-size: 12px; font-weight: 700; padding: 6px; }
+.photo-pick__item:has(input:checked) { outline: 4px solid var(--green); outline-offset: -4px; }
+.photo-pick__item:has(input:focus-visible) { outline: 4px solid var(--ink); outline-offset: -4px; }

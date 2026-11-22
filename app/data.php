@@ -158,6 +158,40 @@ function active_notice(): ?array
     return ['text' => $text, 'color' => in_array($color, ['red', 'green', 'gold'], true) ? $color : 'red'];
 }
 
+/* ---------- Pizza der Woche ---------- */
+
+/** @return array{dish: array, text: string, price_cents: ?int, until: string, photo: ?array}|null */
+function weekly_special(): ?array
+{
+    if (setting('special_active') !== '1') {
+        return null;
+    }
+    $dish = dish((int) setting('special_dish_id', '0'));
+    if ($dish === null) {
+        return null;
+    }
+    $until = (string) setting('special_until', '');
+    if ($until !== '' && (!valid_date($until) || $until < date('Y-m-d'))) {
+        return null;
+    }
+    $price = setting('special_price_cents', '');
+    $photoId = (int) setting('special_photo_id', '0');
+    return [
+        'dish' => $dish,
+        'text' => trim((string) setting('special_text', '')),
+        'price_cents' => $price !== null && $price !== '' && ctype_digit($price) ? (int) $price : null,
+        'until' => $until,
+        'photo' => $photoId > 0 ? db_one('SELECT * FROM photos WHERE id = ?', [$photoId]) : null,
+    ];
+}
+
+/** Nächster Sonntag (bzw. heute, falls Sonntag) als Standard-Enddatum. */
+function next_sunday(): string
+{
+    $d = new DateTimeImmutable('today');
+    return (int) $d->format('w') === 0 ? $d->format('Y-m-d') : $d->modify('next sunday')->format('Y-m-d');
+}
+
 /* ---------- Erstbefüllung ---------- */
 
 function seed_database(): void
@@ -235,6 +269,7 @@ function seed_database(): void
     set_setting('notice_color', 'red');
     set_setting('notice_until', '');
     set_setting('closed_today', '');
+    set_setting('special_active', '0');
     set_setting('delivery_note', 'Wir liefern in Vohenstrauß und Umgebung – frag am Telefon einfach nach deinem Ort.');
 
     log_activity('Website eingerichtet');

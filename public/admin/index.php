@@ -60,6 +60,14 @@ require APP_DIR . '/views/admin_header.php';
   </form>
 </section>
 
+<?php $wk = weekly_special(); ?>
+<a class="tile tile--wide anim-in d2" href="<?= e(url('admin/special.php')) ?>">
+  <span class="tile__stamp" aria-hidden="true">Solo questa settimana!</span>
+  <?= icon('star') ?>
+  <strong>Pizza der Woche</strong>
+  <small><?= $wk ? e($wk['dish']['name']) . ($wk['until'] ? ' · bis ' . e(german_date($wk['until'])) : '') : 'Noch keine ausgewählt – jetzt festlegen' ?></small>
+</a>
+
 <div class="tiles anim-in d2">
   <a class="tile tile--dark" href="<?= e(url('admin/menu.php')) ?>"><?= icon('pizza') ?><strong>Speisekarte</strong><small><?= $counts['total'] ?> Gerichte<?= $counts['soldout'] ? ' · ' . $counts['soldout'] . ' ausverkauft' : '' ?></small></a>
   <a class="tile" href="<?= e(url('admin/hours.php')) ?>"><?= icon('clock') ?><strong>Öffnungszeiten</strong><small><?= $specialCount ? $specialCount . ' Sondertag' . ($specialCount > 1 ? 'e' : '') . ' geplant' : 'Wochenplan & Urlaub' ?></small></a>
