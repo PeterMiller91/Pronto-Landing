@@ -206,10 +206,64 @@
     restart();
   }
 
-  /* ---------- Google Maps (erst nach Zustimmung laden) ---------- */
+  /* ---------- Einwilligung (Cookie-Banner) ---------- */
+  var CONSENT_VERSION = 1;
+  var consent = store.get('pp_consent', null);
+  if (!consent || consent.v !== CONSENT_VERSION) consent = null;
+  // Übernahme der alten Einstellung "Karte immer anzeigen"
+  if (!consent && store.get('pp_maps_ok', false) === true) {
+    consent = { v: CONSENT_VERSION, maps: true, comfort: false, ts: Date.now() };
+    store.set('pp_consent', consent);
+  }
+  var has = function (cat) { return !!(consent && consent[cat]); };
+  var onConsentChange = [];
+
+  var banner = document.querySelector('[data-consent]');
+  var saveConsent = function (maps, comfort) {
+    var before = consent;
+    consent = { v: CONSENT_VERSION, maps: !!maps, comfort: !!comfort, ts: Date.now() };
+    store.set('pp_consent', consent);
+    try { localStorage.removeItem('pp_maps_ok'); } catch (e) { /* egal */ }
+    if (banner) banner.hidden = true;
+    onConsentChange.forEach(function (fn) { fn(consent, before); });
+  };
+  if (banner) {
+    var details = banner.querySelector('[data-consent-details]');
+    var toggleBtn = banner.querySelector('[data-consent-toggle]');
+    var saveBtn = banner.querySelector('[data-consent-save]');
+    var boxMaps = banner.querySelector('[data-consent-cat="maps"]');
+    var boxComfort = banner.querySelector('[data-consent-cat="comfort"]');
+    var showDetails = function (on) {
+      details.hidden = !on;
+      saveBtn.hidden = !on;
+      toggleBtn.setAttribute('aria-expanded', String(on));
+      toggleBtn.textContent = on ? 'Weniger anzeigen' : 'Einstellungen';
+    };
+    var openBanner = function (withDetails) {
+      boxMaps.checked = has('maps');
+      boxComfort.checked = has('comfort');
+      showDetails(!!withDetails);
+      banner.hidden = false;
+      banner.querySelector('button').focus();
+    };
+    toggleBtn.addEventListener('click', function () { showDetails(details.hidden); });
+    banner.querySelector('[data-consent-all]').addEventListener('click', function () { saveConsent(true, true); });
+    banner.querySelector('[data-consent-necessary]').addEventListener('click', function () { saveConsent(false, false); });
+    saveBtn.addEventListener('click', function () { saveConsent(boxMaps.checked, boxComfort.checked); });
+    document.querySelectorAll('[data-consent-open]').forEach(function (b) {
+      b.addEventListener('click', function () { openBanner(true); });
+    });
+    if (!consent) openBanner(false);
+  }
+
+  /* ---------- Google Maps (nur mit Einwilligung) ---------- */
   var map = document.querySelector('[data-map]');
   if (map) {
+    var placeholder = map.innerHTML;
+    var loaded = false;
     var loadMap = function () {
+      if (loaded) return;
+      loaded = true;
       var iframe = document.createElement('iframe');
       iframe.src = map.dataset.src;
       iframe.title = 'Karte: Pizzeria Pronto Pronto, Marktplatz 6, Vohenstrauß';
@@ -219,45 +273,82 @@
       map.innerHTML = '';
       map.appendChild(iframe);
     };
-    if (store.get('pp_maps_ok', false) === true) {
-      loadMap();
-    } else {
-      map.querySelector('[data-map-load]').addEventListener('click', function () {
-        if (map.querySelector('[data-map-remember]').checked) store.set('pp_maps_ok', true);
+    var bindPlaceholder = function () {
+      var btn = map.querySelector('[data-map-load]');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        if (map.querySelector('[data-map-remember]').checked) saveConsent(true, has('comfort'));
         loadMap();
       });
-    }
-  }
-  /* ---------- Als App speichern (PWA) ---------- */
-  var manifestLink = document.querySelector('link[rel="manifest"]');
-  if ('serviceWorker' in navigator && manifestLink && window.isSecureContext) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register(new URL('sw.js', manifestLink.href).href).catch(function () { /* egal */ });
+    };
+    if (has('maps')) loadMap(); else bindPlaceholder();
+    onConsentChange.push(function (c) {
+      if (c.maps) { loadMap(); }
+      else if (loaded) { loaded = false; map.innerHTML = placeholder; bindPlaceholder(); }
     });
   }
 
+  /* ---------- Offline-Speicher / Service Worker (nur mit Einwilligung "Komfort") ---------- */
+  var manifestLink = document.querySelector('link[rel="manifest"]');
+  var swSupported = 'serviceWorker' in navigator && manifestLink && window.isSecureContext;
+  var registerSW = function () {
+    if (swSupported) navigator.serviceWorker.register(new URL('sw.js', manifestLink.href).href).catch(function () { /* egal */ });
+  };
+  var removeSW = function () {
+    if (!swSupported) return;
+    navigator.serviceWorker.getRegistrations().then(function (regs) { regs.forEach(function (r) { r.unregister(); }); });
+    if (window.caches) caches.keys().then(function (keys) { keys.forEach(function (k) { if (k.indexOf('pp-') === 0) caches.delete(k); }); });
+  };
+  if (has('comfort')) registerSW(); else removeSW();
+  onConsentChange.push(function (c) { if (c.comfort) registerSW(); else removeSW(); });
+
+  /* ---------- Als App installieren ---------- */
   var promo = document.querySelector('[data-app-promo]');
   if (promo) {
     var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
     var ua = navigator.userAgent || '';
     var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var isIOSSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    var isAndroid = /Android/.test(ua);
+    var inApp = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|TikTok|; wv\)/.test(ua);
+    var isSamsung = /SamsungBrowser/.test(ua);
+    var isFirefox = /Firefox|FxiOS/.test(ua);
+    var isMobile = isIOS || isAndroid || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     var dismissed = store.get('pp_app_dismissed', 0);
     var recentlyDismissed = dismissed && (Date.now() - dismissed) < 1000 * 60 * 60 * 24 * 30;
     var installBtn = promo.querySelector('[data-install]');
-    var iosHint = promo.querySelector('[data-ios-hint]');
+    var stepsEl = promo.querySelector('[data-install-steps]');
     var deferred = null;
 
-    if (!standalone && !recentlyDismissed) {
-      window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        deferred = e;
-        promo.hidden = false;
-      });
-      if (isIOSSafari) {
-        promo.hidden = false;
-        installBtn.textContent = 'So geht’s';
-      }
+    var steps = function () {
+      if (inApp) return ['Diese Seite ist gerade in einer App (z. B. Instagram oder WhatsApp) geöffnet.', 'Tippe auf ⋮ bzw. ··· und wähle „Im Browser öffnen“.', 'Dann dort erneut auf „Zum Startbildschirm“ tippen.'];
+      if (isIOS) return ['Tippe unten in der Leiste auf <strong>Teilen</strong> (Quadrat mit Pfeil nach oben).', 'Scrolle nach unten und wähle <strong>„Zum Home-Bildschirm“</strong>.', 'Oben rechts auf <strong>„Hinzufügen“</strong> tippen – fertig!'];
+      if (isSamsung) return ['Tippe unten auf das Menü <strong>≡</strong>.', 'Wähle <strong>„Seite hinzufügen zu“</strong> → <strong>„Startbildschirm“</strong>.'];
+      if (isFirefox) return ['Tippe auf das Menü <strong>⋮</strong>.', 'Wähle <strong>„Installieren“</strong> bzw. <strong>„Zum Startbildschirm hinzufügen“</strong>.'];
+      if (isAndroid) return ['Tippe oben rechts auf das Menü <strong>⋮</strong>.', 'Wähle <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.', 'Mit <strong>„Installieren“</strong> bestätigen – fertig!'];
+      return ['Klicke in der Adressleiste auf das Symbol <strong>„Installieren“</strong> (Bildschirm mit Pfeil).', 'Oder im Browser-Menü: <strong>„App installieren“</strong>.'];
+    };
+    var showSteps = function () {
+      stepsEl.innerHTML = steps().map(function (t) { return '<li>' + t + '</li>'; }).join('');
+      stepsEl.hidden = false;
+    };
+    var openPromo = function () {
+      promo.hidden = false;
+      if (!deferred) { showSteps(); installBtn.hidden = true; }
+      promo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferred = e;
+      installBtn.hidden = false;
+      installBtn.textContent = 'Jetzt installieren';
+      stepsEl.hidden = true;
+      if (!standalone && !recentlyDismissed) promo.hidden = false;
+    });
+    // Auf Handys immer anbieten – mit Anleitung, falls der Browser keinen eigenen Dialog hat
+    if (!standalone && !recentlyDismissed && isMobile) {
+      promo.hidden = false;
+      installBtn.textContent = 'So geht’s';
     }
     installBtn.addEventListener('click', function () {
       if (deferred) {
@@ -267,13 +358,17 @@
           deferred = null;
         });
       } else {
-        iosHint.hidden = false;
+        showSteps();
         installBtn.hidden = true;
       }
     });
     promo.querySelector('[data-install-dismiss]').addEventListener('click', function () {
       store.set('pp_app_dismissed', Date.now());
       promo.hidden = true;
+    });
+    document.querySelectorAll('[data-install-open]').forEach(function (a) {
+      if (standalone) { a.hidden = true; return; }
+      a.addEventListener('click', function (e) { e.preventDefault(); openPromo(); });
     });
     window.addEventListener('appinstalled', function () { promo.hidden = true; });
   }
