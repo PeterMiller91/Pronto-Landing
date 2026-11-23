@@ -62,6 +62,7 @@ $home = $isHome ? '' : url('/');
     <a href="<?= e($home) ?>#kueche"><strong>Unsere Küche</strong><em>La nostra cucina</em></a>
     <a href="<?= e($home) ?>#zeiten"><strong>Öffnungszeiten</strong><em>Orari</em></a>
     <a href="<?= e($home) ?>#kontakt"><strong>Kontakt &amp; Anfahrt</strong><em>Contatti</em></a>
+    <?php if ($isHome): ?><a href="#app" data-install-open><strong>Als App installieren</strong><em>Sul tuo telefono</em></a><?php endif; ?>
   </nav>
 </header>
 <main id="inhalt">

@@ -347,7 +347,7 @@ require APP_DIR . '/views/site_header.php';
           <strong>So findest du uns: <?= e($site['street']) ?></strong>
           <button class="btn btn--dark" type="button" data-map-load>Karte anzeigen</button>
           <p>Beim Anzeigen lädt Google Maps und erhält dabei Daten wie deine IP-Adresse. Mehr dazu in der <a href="<?= e(url('datenschutz.php')) ?>">Datenschutzerklärung</a>.</p>
-          <label style="font-size:13px;display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" data-map-remember> Karte künftig immer anzeigen</label>
+          <label style="font-size:13px;display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" data-map-remember> Karte künftig immer anzeigen (Einwilligung, jederzeit widerrufbar)</label>
         </div>
       </div>
       <div class="map__actions">
@@ -358,14 +358,14 @@ require APP_DIR . '/views/site_header.php';
 </section>
 
 <!-- ===== Als App speichern ===== -->
-<section class="app-promo" data-app-promo hidden aria-labelledby="app-title">
+<section class="app-promo" id="app" data-app-promo hidden aria-labelledby="app-title">
   <div class="wrap">
     <div class="app-promo__card">
       <img src="<?= e(url('assets/img/icon-192.png')) ?>" alt="" width="64" height="64" class="app-promo__icon">
       <div class="app-promo__body">
         <h2 id="app-title">Pronto Pronto aufs Handy holen</h2>
         <p>Ein Tipp auf das Pizza-Symbol – und du bist bei Speisekarte, Pizza der Woche und Telefon. Ohne App-Store, ohne Anmeldung.</p>
-        <p class="app-promo__ios" data-ios-hint hidden>Tippe unten auf <strong>Teilen</strong> <span aria-hidden="true">⬆︎</span> und dann auf <strong>„Zum Home-Bildschirm“</strong>.</p>
+        <ol class="app-promo__steps" data-install-steps hidden></ol>
         <div class="app-promo__actions">
           <button class="btn btn--red" type="button" data-install><?= icon('plus') ?>Zum Startbildschirm</button>
           <button class="btn-link" type="button" data-install-dismiss>Nicht jetzt</button>

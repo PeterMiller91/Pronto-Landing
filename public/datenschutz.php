@@ -20,11 +20,18 @@ require APP_DIR . '/views/site_header.php';
     <h2>2. Hosting und Server-Logfiles</h2>
     <p>Diese Website wird bei der netcup GmbH (Karlsruhe) gehostet. Beim Aufruf speichert der Server technisch notwendige Daten (u. a. IP-Adresse, Datum/Uhrzeit, aufgerufene Seite, Browser) in Logfiles. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (sicherer Betrieb). [Speicherdauer laut Hoster ergänzen]</p>
 
-    <h2>3. Keine Cookies, kein Tracking</h2>
-    <p>Die öffentliche Website setzt keine Tracking- oder Werbe-Cookies. Schriftarten werden lokal von unserem Server geladen, nicht von Google. Der Bestellzettel und die Einstellung „Karte immer anzeigen“ werden nur im Speicher deines Browsers (Local Storage) abgelegt und nicht an uns übertragen.</p>
+    <h2>3. Kein Tracking – Speicherungen auf deinem Gerät</h2>
+    <p>Wir setzen keine Werbe- oder Analyse-Cookies und kein Tracking ein. Schriftarten werden lokal von unserem Server geladen, nicht von Google. Folgende Informationen werden im Speicher deines Browsers (Local Storage bzw. Cache) abgelegt und <strong>nicht</strong> an uns übertragen:</p>
+    <ul>
+      <li><strong>Technisch notwendig</strong> (§ 25 Abs. 2 Nr. 2 TDDDG): dein Bestellzettel, deine Auswahl im Einwilligungs-Banner und ob du Hinweise wie „Als App installieren“ ausgeblendet hast.</li>
+      <li><strong>Komfort – nur mit Einwilligung</strong> (§ 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO): Ein sogenannter Service Worker speichert Teile der Website im Browser-Cache, damit sie schneller lädt und die Speisekarte auch ohne Internetverbindung angezeigt werden kann. Beim Widerruf wird dieser Speicher gelöscht.</li>
+    </ul>
 
-    <h2>4. Google Maps</h2>
-    <p>Die Karte wird erst geladen, wenn du auf „Karte anzeigen“ klickst. Dann werden Daten (u. a. deine IP-Adresse) an Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland übertragen und ggf. in die USA übermittelt. Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG. Du kannst sie jederzeit widerrufen, indem du die Website-Daten in deinem Browser löschst. Mehr: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>.</p>
+    <h2>4. Google Maps – nur mit Einwilligung</h2>
+    <p>Die Karte zur Anfahrt wird nur geladen, wenn du im Einwilligungs-Banner „Externe Medien“ erlaubst oder auf „Karte anzeigen“ klickst. Dann werden Daten (u. a. deine IP-Adresse) an Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland übertragen und ggf. in die USA übermittelt. Rechtsgrundlage ist deine Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG; für Übermittlungen in die USA stützt sich Google auf das EU-U.S. Data Privacy Framework. Mehr: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>. Der Link „Route planen“ öffnet Google Maps erst nach deinem Klick in einem neuen Fenster.</p>
+
+    <h2>Einwilligung widerrufen</h2>
+    <p>Du kannst deine Einwilligungen jederzeit mit Wirkung für die Zukunft ändern oder widerrufen – über den Link „Cookie-Einstellungen“ ganz unten auf jeder Seite oder hier: <button class="btn btn--outline btn--sm" type="button" data-consent-open style="min-height:44px">Cookie-Einstellungen öffnen</button></p>
 
     <h2>5. Telefonische Bestellung</h2>
     <p>Wenn du telefonisch bestellst, verarbeiten wir die dafür nötigen Angaben (z. B. Name, Adresse, Telefonnummer) zur Abwicklung der Bestellung (Art. 6 Abs. 1 lit. b DSGVO).</p>
